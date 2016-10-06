@@ -133,20 +133,20 @@ if(__name__ == "__main__"):
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output, errors = p.communicate()
             if (output != ""):
-            subnet = output.rstrip()
-            # Add a . after 192.168.xxx
-            subnet = subnet + '.'
-            print "subnet: " + subnet
+                subnet = output.rstrip()
+                # Add a . after 192.168.xxx
+                subnet = subnet + '.'
+                print "subnet: " + subnet
             # Prevent race condition by running this in the loop to put the device on the arp table
             cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
             p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output2, errors2 = p2.communicate()
             # Search arp for leading mac address bits
             cmd="arp -a | grep '28:10:7b' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            output, errors = p.communicate()
+            p3 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output3, errors3 = p3.communicate()
             if (output != ""):
-                ip = output
+                ip = output3
 
         except KeyboardInterrupt:
             break
