@@ -50,6 +50,8 @@ RUN echo "/etc/init.d/apache2 restart" >> /usr/local/bin/cmd.sh
 # Set the work dir for nodejs photo server
 WORKDIR "/var/www/html"
 
+EXPOSE 5000
+
 # Run photo server
 RUN echo "/usb/bin/nodejs photo-server.js" >> /usr/local/bin/cmd.sh
 RUN echo "while true; do sleep 421; done" >> /usr/local/bin/cmd.sh
