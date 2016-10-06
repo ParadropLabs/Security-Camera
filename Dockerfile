@@ -53,7 +53,7 @@ WORKDIR "/var/www/html"
 EXPOSE 5000
 
 # Run photo server
-RUN echo "/usb/bin/nodejs photo-server.js > my_app_log.log 2> my_app_err.log &" >> /usr/local/bin/cmd.sh
+RUN echo "/usr/bin/nodejs photo-server.js > my_app_log.log 2> my_app_err.log &" >> /usr/local/bin/cmd.sh
 RUN echo "while true; do sleep 421; done" >> /usr/local/bin/cmd.sh
 
 CMD ["/bin/bash","/usr/local/bin/cmd.sh"]
