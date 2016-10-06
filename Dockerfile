@@ -36,7 +36,7 @@ ADD chute/seccam.py /seccam.py
 RUN echo "chmod +x /seccam.py" >> /usr/local/bin/cmd.sh
 
 # Execute the file, one pic every 2 seconds
-RUN echo "python /seccam.py -m_sec 2.0 &" >> /usr/local/bin/cmd.sh
+RUN echo "python /seccam.py -m_sec 2.0 & > seccam.log 2> seccam.err" >> /usr/local/bin/cmd.sh
 
 # Add the symlink
 RUN echo "ln -s --relative /var/www/html/motionLog /var/www/html/app-dist/" >> /usr/local/bin/cmd.sh

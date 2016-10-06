@@ -136,20 +136,15 @@ if(__name__ == "__main__"):
         sys.exit(1)
     except Exception as e:
         print('!! error: %s' % str(e))
-    # Fill arp table
-    try:
-        cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        output, errors = p.communicate()
-    except KeyboardInterrupt:
-        sys.exit(1)
-    except Exception as e:
-        print('!! error: %s' % str(e))
 
     # Check the arp table for mac of camera
     ip = ""
     while(ip == ""):
         try:
+            # Prevent race condition by running this in the loop to put the device on the arp table
+            cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
+            p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output2, errors2 = p2.communicate()
             # Search arp for leading mac address bits
             cmd="arp -a | grep '28:10:7b' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
