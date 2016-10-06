@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
 ADD http://pages.cs.wisc.edu/~dmeyer/paradrop/seccam/seccam.tar.gz /var/www/
 #ADD chute/seccam_web.tar.gz /var/www/
 # Untar
-RUN tar xzf /var/www/seccam_web.tar.gz -C /var/www/html/
+#RUN tar xzf /var/www/seccam_web.tar.gz -C /var/www/html/
+RUN tar xzf /var/www/seccam.tar.gz -C /var/www/html/
 
 # Remove the default apache2 index.html file
 RUN echo "rm /var/www/html/index.html" >> /usr/local/bin/cmd.sh
