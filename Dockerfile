@@ -1,7 +1,8 @@
 # Security Cam v2
 #  - Finds ip address webcam - used for detecting motion
 # Version 1.10.00
-FROM ubuntu:14.04
+#FROM ubuntu:14.04
+FROM dmeyer-seccam-img
 #FROM debian:wheezy
 MAINTAINER Paradrop Team <info@paradrop.io>
 
