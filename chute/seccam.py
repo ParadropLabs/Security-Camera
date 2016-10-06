@@ -29,15 +29,12 @@ def getImage(ip):
     """Gets the file from the specified host, port and location/query"""
     try:
         # Here is a portion of the URL
-        #ipaddr = '192.168.128.99'
         #######################################################################
         # TODO1 : Send a HTTP GET Request to the WebCam
         # (with Username:'admin' and Password:''). 
         # We recommend using the httplib package 
-        #h = httplib.HTTP(ipaddr, 80)
         h = httplib.HTTP(ip, 80) 
         h.putrequest('GET', '/image.jpg')
-        #h.putheader('Host', ipaddr)
         h.putheader('Host', ip)
         h.putheader('User-agent', 'python-httplib')
         h.putheader('Content-type', 'image/jpeg')
@@ -122,7 +119,29 @@ if(__name__ == "__main__"):
     # Need to store the old image
     oldjpg = None
 
-    # Determine IP address
+    ## Determine IP address
+    #######################################################################
+    # make sure apr table contains all devices
+    # Get the subnet of paradrop
+    subnet = ""
+    try:
+        cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output, errors = p.communicate()
+            if (output != ""):
+                subnet = output
+                # Add a . after 192.168.xxx
+                subnet = subnet + '.'
+    except KeyboardInterrupt:
+        break
+    except Exception as e:
+        print('!! error: %s' % str(e))
+    # - Paradrop standard subnet range is 192.168.xxx.100-200
+    for ping in range(100,200):
+        address = subnet + str(ping)
+        res = subprocess.call(['ping', '-c', '1', address])
+
+    # Check the arp table for mac of camera
     ip = ""
     while(ip == ""):
         try:
