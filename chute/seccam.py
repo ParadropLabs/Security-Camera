@@ -124,23 +124,19 @@ if(__name__ == "__main__"):
     # make sure apr table contains all devices
     # Get the subnet of paradrop
     subnet = ""
-    try:
-        cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        output, errors = p.communicate()
-        if (output != ""):
-            subnet = output.rstrip()
-            # Add a . after 192.168.xxx
-            subnet = subnet + '.'
-    except KeyboardInterrupt:
-        sys.exit(1)
-    except Exception as e:
-        print('!! error: %s' % str(e))
 
     # Check the arp table for mac of camera
     ip = ""
     while(ip == ""):
         try:
+            cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output, errors = p.communicate()
+            if (output != ""):
+            subnet = output.rstrip()
+            # Add a . after 192.168.xxx
+            subnet = subnet + '.'
+            print "subnet: " + subnet
             # Prevent race condition by running this in the loop to put the device on the arp table
             cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
             p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
