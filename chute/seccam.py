@@ -129,7 +129,7 @@ if(__name__ == "__main__"):
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         output, errors = p.communicate()
         if (output != ""):
-            subnet = output
+            subnet = output.rstrip()
             # Add a . after 192.168.xxx
             subnet = subnet + '.'
     except KeyboardInterrupt:
