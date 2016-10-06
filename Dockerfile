@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 
 #  Get the web frontend
-#ADD http://pages.cs.wisc.edu/~dmeyer/paradrop/seccam/seccam.tar.gz /var/www/
-ADD chute/seccam_web.tar.gz /var/www/
+ADD http://pages.cs.wisc.edu/~dmeyer/paradrop/seccam/seccam.tar.gz /var/www/
+#ADD chute/seccam_web.tar.gz /var/www/
 # Untar
 RUN tar xzf /var/www/seccam_web.tar.gz -C /var/www/html/
 
