@@ -138,7 +138,7 @@ if(__name__ == "__main__"):
                 subnet = subnet + '.'
                 print "subnet: " + subnet
             # Prevent race condition by running this in the loop to put the device on the arp table
-            cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
+            cmd = "echo $(seq 100 200) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
             p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output2, errors2 = p2.communicate()
             # Search arp for leading mac address bits
