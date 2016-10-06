@@ -50,7 +50,7 @@ RUN echo "/etc/init.d/apache2 restart" >> /usr/local/bin/cmd.sh
 # Set the work dir for nodejs photo server
 WORKDIR "/var/www/html"
 
-EXPOSE 5000
+EXPOSE 80
 
 # Run photo server
 RUN echo "/usr/bin/nodejs photo-server.js > my_app_log.log 2> my_app_err.log &" >> /usr/local/bin/cmd.sh
