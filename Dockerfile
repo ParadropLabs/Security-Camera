@@ -16,14 +16,12 @@ RUN apt-get update && apt-get install -y \
 
 #  Get the web frontend
 #ADD http://pages.cs.wisc.edu/~dmeyer/paradrop/seccam/seccam.tar.gz /var/www/
-ADD chute/seccam.tar.gz /var/www/
+ADD chute/seccam_web.tar.gz /var/www/
 # Untar
-RUN tar xzf /var/www/seccam.tar.gz -C /var/www/html/
+RUN tar xzf /var/www/seccam_web.tar.gz -C /var/www/html/
 
 # Remove the default apache2 index.html file
 RUN echo "rm /var/www/html/index.html" >> /usr/local/bin/cmd.sh
-# Make sure apache2 is running
-RUN echo "/etc/init.d/apache2 restart" >> /usr/local/bin/cmd.sh
 
 # Create the image cache directory
 RUN echo "mkdir -p /var/www/html/motionLog" >> /usr/local/bin/cmd.sh
@@ -43,6 +41,9 @@ RUN echo "ln -s --relative /var/www/html/motionLog /var/www/html/app-dist/" >> /
 
 # Allow client traffic for development
 RUN echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE" >> /usr/local/bin/cmd.sh
+
+# Make sure apache2 is running
+RUN echo "/etc/init.d/apache2 restart" >> /usr/local/bin/cmd.sh
 
 # Set the work dir for nodejs photo server
 WORKDIR "/var/www/html"
