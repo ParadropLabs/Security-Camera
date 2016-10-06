@@ -138,7 +138,7 @@ if(__name__ == "__main__"):
         print('!! error: %s' % str(e))
     # Fill arp table
     try:
-        cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 192.168.0.% | grep -E '[0-1].*?:'"
+        cmd = "echo $(seq 254) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         output, errors = p.communicate()
     except KeyboardInterrupt:
