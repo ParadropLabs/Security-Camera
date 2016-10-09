@@ -13,7 +13,10 @@ ln -s --relative /var/www/html/motionLog /var/www/html/app-dist/
 # Allow client traffic for development
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 
-# Make sure apache2 is running
+# Enable mod rewrite
+/usr/sbin/a2enmod rewrite
+
+# Make sure apache2 is running and rewrite is enabled
 /etc/init.d/apache2 restart
 
 # Run photo server

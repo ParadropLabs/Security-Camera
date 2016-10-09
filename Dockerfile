@@ -14,11 +14,14 @@ RUN apt-get update && apt-get install -y \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
+# Apache site configuration
+ADD chute/000-default.conf /etc/apache2/sites-available/
+
 #  Get the web frontend
 ADD chute/web /var/www/html
 
 # Remove the default apache2 index.html file
-RUN rm /var/www/html/index.html
+#RUN rm /var/www/html/index.html
 
 # Install files required by the chute.
 #
