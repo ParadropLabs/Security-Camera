@@ -30,6 +30,6 @@ ADD chute/run.sh /usr/local/bin/run.sh
 # Set the work dir for nodejs photo server
 WORKDIR "/var/www/html"
 
-EXPOSE 80 81 82
+EXPOSE 80 81 8010
 
 CMD ["/bin/bash", "/usr/local/bin/run.sh"]

@@ -147,6 +147,13 @@ if(__name__ == "__main__"):
             output3, errors3 = p3.communicate()
             if (output != ""):
                 ip = output3
+                # Set iptables for wan port access
+                cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
+                p4 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                output3, errors3 = p4.communicate()
+                cmd="iptables -t nat -A POSTROUTING -p tcp -d " + ip + "--dport 81 -j MASQUERADE"
+                p5 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                output3, errors3 = p5.communicate()
 
         except KeyboardInterrupt:
             break
