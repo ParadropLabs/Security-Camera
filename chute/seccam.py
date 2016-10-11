@@ -142,24 +142,21 @@ if(__name__ == "__main__"):
             p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output2, errors2 = p2.communicate()
             # Search arp for leading mac address bits
-            cmd="arp -a | grep -e '28:10:7b' -e 'b0:c5:54' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
+            cmd="/bin/bash arp -a | grep -e '28:10:7b' -e 'b0:c5:54' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
             p3 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output3, errors3 = p3.communicate()
             if (output != ""):
 		print "output3: " + output3
-		print "errors3: " + errors3
                 ip = output3.rstrip()
                 # Set iptables for wan port access
                 cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
-                print cmd
+                print "cmd: " + cmd
                 p4 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
                 output4, errors4 = p4.communicate()
-                print errors4
                 cmd="iptables -t nat -A POSTROUTING -p tcp -d " + ip + " --dport 81 -j MASQUERADE"
-                print cmd
+                print "cmd: " + cmd
                 p5 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
                 output5, errors5 = p5.communicate()
-                print errors5
 
         except KeyboardInterrupt:
             break
