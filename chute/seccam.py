@@ -142,7 +142,7 @@ if(__name__ == "__main__"):
             p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output2, errors2 = p2.communicate()
             # Search arp for leading mac address bits
-            cmd="arp -a | grep '28:10:7b' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
+            cmd="arp -a | grep -e '28:10:7b' -e 'b0:c5:54' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
             p3 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output3, errors3 = p3.communicate()
             if (output != ""):
