@@ -146,6 +146,8 @@ if(__name__ == "__main__"):
             p3 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
             output3, errors3 = p3.communicate()
             if (output != ""):
+		print "output3: " + output3
+		print "errors3: " + errors3
                 ip = output3.rstrip()
                 # Set iptables for wan port access
                 cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
