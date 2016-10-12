@@ -128,16 +128,17 @@ if(__name__ == "__main__"):
     while(ip == ""):
         try:
 
-            # Check the arp table for mac of camera
-            cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            output, errors = p.communicate()
-            if (output != ""):
-                subnet = output.rstrip()
+            # Get the subnet if haven't yet
+            if (subnet == ""):
+                cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                output, errors = p.communicate()
+                if (output != ""):
+                    subnet = output.rstrip()
 
-                # Add a . after 192.168.xxx
-                subnet = subnet + '.'
-                print "subnet: " + subnet
+                    # Add a . after 192.168.xxx
+                    subnet = subnet + '.'
+                    print "subnet: " + subnet
 
             # Prevent race condition by running this in the loop to put the device on the arp table
             cmd = "echo $(seq 100 200) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
