@@ -4,6 +4,7 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
+import os.path
 
 try:
     import PIL
@@ -17,6 +18,10 @@ timeflt = lambda: time.time()
 THRESH_0 = 20.0
 THRESH_1 = 40.0
 THRESH_2 = 60.0
+
+WIFI_LEASE = "/paradrop/dnsmasq-wifi.leases"
+CAMERA_MAC = os.environ.get('CAMERA_MAC')
+CAMERA_HOSTNAME = os.environ.get('CAMERA_HOSTNAME')
 
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
@@ -88,6 +93,54 @@ def detectMotion(img1, jpg2):
     rms = math.sqrt(sum_sqs / float(jpg1.size[0] * jpg1.size[1]))
     return (rms,jpg1)
 
+def getCameraIP():
+    """
+            Checks the paradrop wifi lease file for the camera's IP address
+            Arguments:
+                    None.
+            Returns:
+                    IP address of the camera
+    """
+    ip = ""
+    while(ip == ""):
+        try:
+
+            # Check for the file existing
+            if (os.path.isfile(WIFI_LEASE)):
+                with open(WIFI_LEASE) as f:
+                    for line in f:
+
+                        # Example lease line:
+                        #    1479277513 b0:c5:54:13:80:86 192.168.128.181 DCS-931L 01:b0:c5:54:13:80:86
+                        time,mac,ipaddr,hostname,altmac = line.split()
+
+                        # Check environment variables
+                        if ( CAMERA_MAC ):
+                            print "Camera_mac exists: " + CAMERA_MAC
+                            if( mac == CAMERA_MAC ):
+                                ip = ipaddr
+                        elif ( CAMERA_HOSTNAME ):
+                            print "Camera_hostname exists: " + CAMERA_HOSTNAME
+                            if( hostname == CAMERA_HOSTNAME ):
+                                ip = ipaddr
+
+                        # Check the known D-Link camera macs we have for the workshop
+                        elif '28:10:7b' in mac:
+                            print "28:10:7b exists "
+                            ip = ipaddr
+                        elif 'b0:c5:54' in mac:
+                            print "b0:c5:54 exists "
+                            ip = ipaddr
+                        elif '01:b0:c5' in mac:
+                            print "01:b0:c5 exists "
+                            ip = ipaddr
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print('!! error: %s' % str(e))
+            time.sleep(m_sec)
+    return ip
 
 
 if(__name__ == "__main__"):
@@ -119,58 +172,19 @@ if(__name__ == "__main__"):
     # Need to store the old image
     oldjpg = None
 
-    ## Determine IP address
-    #######################################################################
-    # make sure apr table contains all devices
-    # Get the subnet of paradrop
-    subnet = ""
-    ip = ""
-    while(ip == ""):
-        try:
 
-            # Get the subnet if haven't yet
-            if (subnet == ""):
-                cmd = "ifconfig -a | grep 'inet addr:192.168' | awk '{print $2}' | egrep -o '([0-9]+\.){2}[0-9]+'"
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                output, errors = p.communicate()
-                if (output != ""):
-                    subnet = output.rstrip()
-
-                    # Add a . after 192.168.xxx
-                    subnet = subnet + '.'
-                    print "subnet: " + subnet
-
-            # Prevent race condition by running this in the loop to put the device on the arp table
-            cmd = "echo $(seq 100 200) | xargs -P255 -I% -d' ' ping -W 1 -c 1 " + subnet + "% | grep -E '[0-1].*?:'"
-            p2 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            output2, errors2 = p2.communicate()
-
-            # Search arp for leading mac address bits
-            cmd="arp -a | grep -e '28:10:7b' -e 'b0:c5:54' -e '01:b0:c5' | awk '{print $2}' | egrep -o '([0-9]+\.){3}[0-9]+'"
-            p3 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            output3, errors3 = p3.communicate()
-
-            if (output3 != ""):
-                print "output3: '" + output3 + "'"
-                ip = output3.rstrip()
-
-                # Set iptables for wan port access
-                cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
-                print "cmd: " + cmd
-                p4 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                output4, errors4 = p4.communicate()
-                cmd="iptables -t nat -A POSTROUTING -p tcp -d " + ip + " --dport 81 -j MASQUERADE"
-                print "cmd: " + cmd
-                p5 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                output5, errors5 = p5.communicate()
-
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print('!! error: %s' % str(e))
-            time.sleep(m_sec)
-
+    ip = getCameraIP()
     print("Found IP %s" % ip)
+
+    # Set iptables for wan port access
+    cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
+    print "cmd: " + cmd
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output, errors = p.communicate()
+    cmd="iptables -t nat -A POSTROUTING -p tcp -d " + ip + " --dport 81 -j MASQUERADE"
+    print "cmd: " + cmd
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output, errors = p.communicate()
 
     # Setup while loop requesting images from webcam
     while(True):
