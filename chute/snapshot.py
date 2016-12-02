@@ -96,7 +96,7 @@ def takeSnapShot(ip, m_save):
             # Did we get an image?
             if(img is None):
                 print("** SnapShot Failed, retrying")
-                time.sleep(0.5)
+                time.sleep(1.0)
                 continue
             else:
                 try:
@@ -106,14 +106,14 @@ def takeSnapShot(ip, m_save):
                     jpg.save(fileName)
                     return jpg;
                 except Exception as e:
-                    time.sleep(0.5)
+                    time.sleep(1.0)
                     jpg = None
         except KeyboardInterrupt:
             break
         except Exception as e:
             print('!! error: %s' % str(e))
             jpg = None
-            time.sleep(0.5)
+            time.sleep(1.0)
 
 if(__name__ == "__main__"):
     p = setupArgParse()
