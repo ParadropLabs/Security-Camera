@@ -4,7 +4,7 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
-import flask
+from flask import request
 
 try:
     import PIL

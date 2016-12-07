@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# install flask
+pip install Flask
+
 # Create the image cache directory
 mkdir -p /var/www/html/motionLog
 chmod a+rw /var/www/html/motionLog
