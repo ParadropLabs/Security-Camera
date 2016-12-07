@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # install flask
+easy_install pip
+
 pip install Flask
 
 # Create the image cache directory
