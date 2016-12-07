@@ -186,11 +186,6 @@ if(__name__ == "__main__"):
     # Setup while loop requesting images from webcam
     while(True):
         try:
-
-        except Exception as err:
-            print('!! error: %s' % str(err))
-
-        try:
             img = getImage(ip)
             # Did we get an image?
             if(img is None):
