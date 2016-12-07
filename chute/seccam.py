@@ -4,6 +4,7 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
+import flask
 
 try:
     import PIL
@@ -18,6 +19,14 @@ THRESH_0 = 20.0
 THRESH_1 = 40.0
 THRESH_2 = 60.0
 
+@app.route('/getReq', methods=['GET', 'POST'])
+def getReq():
+    print(request)
+    if request.method == 'GET':
+        print("Got Message!")
+    else:
+        print("Other Message")
+
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
     p.add_argument('-calibrate', help='Temporary mode to help calibrate the thresholds', action='store_true')
@@ -31,9 +40,9 @@ def getImage(ip):
         # Here is a portion of the URL
         #######################################################################
         # TODO1 : Send a HTTP GET Request to the WebCam
-        # (with Username:'admin' and Password:''). 
-        # We recommend using the httplib package 
-        h = httplib.HTTP(ip, 80) 
+        # (with Username:'admin' and Password:'').
+        # We recommend using the httplib package
+        h = httplib.HTTP(ip, 80)
         h.putrequest('GET', '/image.jpg')
         h.putheader('Host', ip)
         h.putheader('User-agent', 'python-httplib')
@@ -175,6 +184,11 @@ if(__name__ == "__main__"):
     # Setup while loop requesting images from webcam
     while(True):
         try:
+
+        except Exception as err:
+            print('!! error: %s' % str(err))
+
+        try:
             img = getImage(ip)
             # Did we get an image?
             if(img is None):
@@ -193,7 +207,7 @@ if(__name__ == "__main__"):
                         #######################################################################
                         # TODO2 : Check the RMS difference and store the image to the proper
                         # location, for our webserver to read these files they should go
-                        # under the location /srv/www/motionlog/* 
+                        # under the location /srv/www/motionlog/*
                         if(diff > thresh):
                             print("** Motion! %.3f" % diff)
                             fileName = "%s%d.jpg" % (m_save, time.time())
