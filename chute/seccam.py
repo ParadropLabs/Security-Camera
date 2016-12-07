@@ -4,7 +4,22 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
+
+
+from flask import Flask
 from flask import request
+app = Flask(__name__)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return ('get message')
+    else:
+        return ("error")
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
 
 try:
     import PIL
