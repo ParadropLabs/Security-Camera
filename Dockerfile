@@ -10,9 +10,16 @@ RUN apt-get update && apt-get install -y \
 	apache2 \
 	iptables \
 	nodejs \
+	python-virtualenv \
 	python-imaging \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
+
+# Install pip
+RUN easy_install pip
+
+# Install Flask
+RUN pip install Flask
 
 # Apache site configuration
 ADD chute/000-default.conf /etc/apache2/sites-available/
