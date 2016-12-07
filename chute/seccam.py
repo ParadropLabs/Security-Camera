@@ -108,6 +108,8 @@ if(__name__ == "__main__"):
     sens = args.m_sensitivity
     m_save = '/var/www/html/motionLog/motion-'
 
+    print("In main\n")
+
     if(m_sec < 1.0):
         print('** For the workshop, please do not use lower than 1.0 for m_sec')
         exit()
