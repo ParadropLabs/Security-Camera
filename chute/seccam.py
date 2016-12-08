@@ -5,22 +5,6 @@ import httplib
 import base64
 import StringIO
 
-
-from flask import Flask
-from flask import request
-app = Flask(__name__)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'GET':
-        return ('get message')
-    else:
-        return ("error")
-
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
-
 try:
     import PIL
     from PIL import Image, ImageChops
@@ -152,6 +136,7 @@ if(__name__ == "__main__"):
     subnet = ""
     ip = ""
     while(ip == ""):
+        print("Try to connect from router to WebCam\n")
         try:
 
             # Get the subnet if haven't yet
