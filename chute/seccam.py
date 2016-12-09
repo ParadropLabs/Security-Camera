@@ -39,14 +39,18 @@ def create_app(ip, m_save):
 
     @app.route('/snap')
     def takeSnapShot():
+        print("In snap shot")
         jpg = None
+        fileName = ""
+        print(ip, m_save)
         while(jpg is None):
             try:
+                print("try to get image")
                 img = getImage(ip)
                 # Did we get an image?
                 if(img is None):
                     print("** SnapShot Failed, retrying")
-                    time.sleep(1.0)
+                    time.sleep(2.0)
                     continue
                 else:
                     try:
@@ -56,14 +60,14 @@ def create_app(ip, m_save):
                         jpg.save(fileName)
                         return jpg;
                     except Exception as e:
-                        time.sleep(1.0)
+                        time.sleep(2.0)
                         jpg = None
             except KeyboardInterrupt:
                 break
             except Exception as e:
                 print('!! error: %s' % str(e))
                 jpg = None
-                time.sleep(1.0)
+                time.sleep(2.0)
         return fileName
 
     return app
