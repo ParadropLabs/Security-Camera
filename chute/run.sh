@@ -9,8 +9,8 @@ python /usr/local/bin/seccam.py -m_sec 2.0 > seccam.log 2> seccam.err &
 #python /usr/local/bin/seccam.py -m_sec 2.0 > seccam.log &
 
 
-export FLASK_APP = seccam.py
-flask run > flask.log &
+#export FLASK_APP = seccam.py
+#flask run > flask.log &
 
 # Execute the file, one pic every 2 seconds
 # python /usr/local/bin/snapshot.py -m_sec 2.0 > snapshot.log 2> snapshot.err &
