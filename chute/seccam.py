@@ -55,10 +55,9 @@ def create_app(ip, m_save):
                 else:
                     try:
                         jpg = PIL.Image.open(img)
-                        print('jpg: %s' % str(e))
                         fileName = "%s%d.jpg" % (m_save, time.time())
+                        print('jpg: %s' % str(fileName))
                         jpg.save(fileName)
-                        return jpg;
                     except Exception as e:
                         time.sleep(2.0)
                         jpg = None
