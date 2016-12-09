@@ -4,6 +4,7 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
+import thread
 from flask import Flask
 from flask import request
 
@@ -37,6 +38,12 @@ def create_app():
         return 'Hello, World!'
 
     return app
+
+#'''
+def run_app():
+    print("\nListen!!!\n")
+    app = create_app()
+    app.run(host = '0.0.0.0', port = 8011)
 
 #'''
 
@@ -114,11 +121,6 @@ def detectMotion(img1, jpg2):
 
 if(__name__ == "__main__"):
     print("In main\n")
-
-    app = create_app()
-    app.run(host = '0.0.0.0', port = 8011)
-
-    print("After app run\n")
 
     p = setupArgParse()
     args = p.parse_args()
@@ -203,6 +205,12 @@ if(__name__ == "__main__"):
             time.sleep(m_sec)
 
     print("Found IP %s" % ip)
+
+
+    try:
+       thread.start_new_thread( run_app, () )
+    except:
+       print "Error: unable to start thread"
 
     # Setup while loop requesting images from webcam
     while(True):
