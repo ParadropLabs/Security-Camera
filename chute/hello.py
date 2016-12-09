@@ -13,6 +13,7 @@ def login():
 def hello_world():
     return 'Hello, World!'
 
+app.run(port = 5001)
 
-if(__name__ == "__main__"):
-    print("In Main")
+#if(__name__ == "__main__"):
+#    print("In Main")
