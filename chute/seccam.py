@@ -21,20 +21,23 @@ THRESH_1 = 40.0
 THRESH_2 = 60.0
 
 #'''
-app = Flask(__name__)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'GET':
-        return ('get message')
-    else:
-        return ("error")
+def create_app():
+    app = Flask(__name__)
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'GET':
+            return ('get message')
+        else:
+            return ("error")
 
-app.run(host = '0.0.0.0', port = 8011)
+    @app.route('/')
+    def hello_world():
+        return 'Hello, World!'
+        
+    return app
+
 #'''
 
 def setupArgParse():
@@ -110,6 +113,9 @@ def detectMotion(img1, jpg2):
 
 
 if(__name__ == "__main__"):
+    app = create_app()
+    app.run(host = '0.0.0.0', port = 8011)
+
     p = setupArgParse()
     args = p.parse_args()
 
