@@ -16,10 +16,10 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install pip
-RUN easy_install pip
+# RUN easy_install pip
 
 # Install Flask
-RUN pip install Flask
+# RUN pip install Flask
 
 # Apache site configuration
 ADD chute/000-default.conf /etc/apache2/sites-available/
