@@ -35,7 +35,7 @@ def create_app():
     @app.route('/')
     def hello_world():
         return 'Hello, World!'
-        
+
     return app
 
 #'''
@@ -113,8 +113,12 @@ def detectMotion(img1, jpg2):
 
 
 if(__name__ == "__main__"):
+    print("In main\n")
+
     app = create_app()
     app.run(host = '0.0.0.0', port = 8011)
+
+    print("After app run\n")
 
     p = setupArgParse()
     args = p.parse_args()
@@ -124,7 +128,7 @@ if(__name__ == "__main__"):
     sens = args.m_sensitivity
     m_save = '/var/www/html/motionLog/motion-'
 
-    print("In main\n")
+    print("After global vars\n")
 
     if(m_sec < 1.0):
         print('** For the workshop, please do not use lower than 1.0 for m_sec')
