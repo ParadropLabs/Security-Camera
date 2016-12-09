@@ -33,7 +33,7 @@ def login():
 def hello_world():
     return 'Hello, World!'
 
-app.run(port = 8011)
+app.run(host = '0.0.0.0', port = 8011)
 
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
