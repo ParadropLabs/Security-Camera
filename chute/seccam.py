@@ -4,6 +4,8 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
+from flask import Flask
+from flask import request
 
 try:
     import PIL
@@ -18,13 +20,20 @@ THRESH_0 = 20.0
 THRESH_1 = 40.0
 THRESH_2 = 60.0
 
-@app.route('/getReq', methods=['GET', 'POST'])
-def getReq():
-    print(request)
+app = Flask(__name__)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     if request.method == 'GET':
-        print("Got Message!")
+        return ('get message')
     else:
-        print("Other Message")
+        return ("error")
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+
+app.run(port = 5001)
 
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
