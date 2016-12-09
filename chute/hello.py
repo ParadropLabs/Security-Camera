@@ -13,7 +13,7 @@ def login():
 def hello_world():
     return 'Hello, World!'
 
-app.run(port = 5001)
+app.run(host = '0.0.0.0', port = 5001)
 
 #if(__name__ == "__main__"):
 #    print("In Main")
