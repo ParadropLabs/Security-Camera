@@ -23,7 +23,7 @@ THRESH_2 = 60.0
 
 #'''
 
-def create_app():
+def create_app(ip, m_save):
     app = Flask(__name__)
 
     @app.route('/login', methods=['GET', 'POST'])
@@ -37,14 +37,42 @@ def create_app():
     def hello_world():
         return 'Hello, World!'
 
+    @app.route('/snap')
+    def takeSnapShot():
+        jpg = None
+        while(jpg is None):
+            try:
+                img = getImage(ip)
+                # Did we get an image?
+                if(img is None):
+                    print("** SnapShot Failed, retrying")
+                    time.sleep(1.0)
+                    continue
+                else:
+                    try:
+                        jpg = PIL.Image.open(img)
+                        print('jpg: %s' % str(e))
+                        fileName = "%s%d.jpg" % (m_save, time.time())
+                        jpg.save(fileName)
+                        return jpg;
+                    except Exception as e:
+                        time.sleep(1.0)
+                        jpg = None
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print('!! error: %s' % str(e))
+                jpg = None
+                time.sleep(1.0)
+        return fileName
+
     return app
 
 #'''
-def run_app():
+def run_app(ip, m_save):
     print("\nListen!!!\n")
-    app = create_app()
+    app = create_app(ip, m_save)
     app.run(host = '0.0.0.0', port = 8011)
-
 #'''
 
 def setupArgParse():
@@ -208,7 +236,7 @@ if(__name__ == "__main__"):
 
 
     try:
-       thread.start_new_thread( run_app, () )
+       thread.start_new_thread( run_app, (ip, m_save,) )
     except:
        print "Error: unable to start thread"
 
