@@ -190,7 +190,7 @@ if(__name__ == "__main__"):
     subnet = ""
     ip = ""
     while(ip == ""):
-        print("Try to connect from router to WebCam\n")
+        print("Try to connect from router to WebCam")
         try:
 
             # Get the subnet if haven't yet
