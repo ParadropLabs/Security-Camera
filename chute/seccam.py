@@ -243,11 +243,10 @@ if(__name__ == "__main__"):
     except:
        print "Error: unable to start thread"
 
-    while(True):
-       pass
+    #while(True):
+    #   pass
 
     # Setup while loop requesting images from webcam
-    '''
     while(True):
         try:
             img = getImage(ip)
@@ -282,4 +281,3 @@ if(__name__ == "__main__"):
         except Exception as e:
             print('!! error: %s' % str(e))
             time.sleep(m_sec)
-        '''
