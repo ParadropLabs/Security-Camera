@@ -4,9 +4,6 @@ import sys, math, os, string, time, argparse, json, subprocess
 import httplib
 import base64
 import StringIO
-import thread
-from flask import Flask
-from flask import request
 
 try:
     import PIL
@@ -20,63 +17,6 @@ timeflt = lambda: time.time()
 THRESH_0 = 20.0
 THRESH_1 = 40.0
 THRESH_2 = 60.0
-
-#'''
-
-def create_app(ip, m_save):
-    app = Flask(__name__)
-
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        if request.method == 'GET':
-            return ('get message')
-        else:
-            return ("error")
-
-    @app.route('/')
-    def hello_world():
-        return 'Hello, World!'
-
-    @app.route('/snap')
-    def takeSnapShot():
-        print("In snap shot")
-        jpg = None
-        fileName = ""
-        print(ip, m_save)
-        while(jpg is None):
-            try:
-                print("try to get image")
-                img = getImage(ip)
-                # Did we get an image?
-                if(img is None):
-                    print("** SnapShot Failed, retrying")
-                    time.sleep(2.0)
-                    continue
-                else:
-                    try:
-                        jpg = PIL.Image.open(img)
-                        fileName = "%s%d.jpg" % (m_save, time.time())
-                        print('jpg: %s' % str(fileName))
-                        jpg.save(fileName)
-                    except Exception as e:
-                        time.sleep(2.0)
-                        jpg = None
-            except KeyboardInterrupt:
-                break
-            except Exception as e:
-                print('!! error: %s' % str(e))
-                jpg = None
-                time.sleep(2.0)
-        return fileName
-
-    return app
-
-#'''
-def run_app(ip, m_save):
-    print("\nListen!!!\n")
-    app = create_app(ip, m_save)
-    app.run(host = '0.0.0.0', port = 8011)
-#'''
 
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
@@ -148,11 +88,34 @@ def detectMotion(img1, jpg2):
     rms = math.sqrt(sum_sqs / float(jpg1.size[0] * jpg1.size[1]))
     return (rms,jpg1)
 
-
+def takeSnapShot(ip, m_save):
+    jpg = None
+    while(jpg is None):
+        try:
+            img = getImage(ip)
+            # Did we get an image?
+            if(img is None):
+                print("** SnapShot Failed, retrying")
+                time.sleep(1.0)
+                continue
+            else:
+                try:
+                    jpg = PIL.Image.open(img)
+                    fileName = "%s%d.jpg" % (m_save, time.time())
+                    print('jpg: %s' % str(fileName))
+                    jpg.save(fileName)
+                    return jpg;
+                except Exception as e:
+                    time.sleep(1.0)
+                    jpg = None
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print('!! error: %s' % str(e))
+            jpg = None
+            time.sleep(1.0)
 
 if(__name__ == "__main__"):
-    print("In main\n")
-
     p = setupArgParse()
     args = p.parse_args()
 
@@ -160,8 +123,6 @@ if(__name__ == "__main__"):
     m_sec = args.m_sec
     sens = args.m_sensitivity
     m_save = '/var/www/html/motionLog/motion-'
-
-    print("After global vars\n")
 
     if(m_sec < 1.0):
         print('** For the workshop, please do not use lower than 1.0 for m_sec')
@@ -190,7 +151,6 @@ if(__name__ == "__main__"):
     subnet = ""
     ip = ""
     while(ip == ""):
-        print("Try to connect from router to WebCam")
         try:
 
             # Get the subnet if haven't yet
@@ -237,47 +197,7 @@ if(__name__ == "__main__"):
 
     print("Found IP %s" % ip)
 
-
-    try:
-       thread.start_new_thread( run_app, (ip, m_save,) )
-    except:
-       print "Error: unable to start thread"
-
-    #while(True):
-    #   pass
-
     # Setup while loop requesting images from webcam
     while(True):
-        try:
-            img = getImage(ip)
-            # Did we get an image?
-            if(img is None):
-                print("** No image discovered")
-                time.sleep(m_sec)
-                continue
-            else:
-                tup = detectMotion(img, oldjpg)
-                if(tup):
-                    # Explode the result
-                    diff, jpg = tup
-                    if(calib):
-                        print(diff)
-                    elif(diff):
-                        # if above a threshold, store it to file
-                        #######################################################################
-                        # TODO2 : Check the RMS difference and store the image to the proper
-                        # location, for our webserver to read these files they should go
-                        # under the location /srv/www/motionlog/*
-                        if(diff > thresh):
-                            print("** Motion! %.3f" % diff)
-                            fileName = "%s%d.jpg" % (m_save, time.time())
-                            jpg.save(fileName)
-                    else:
-                        print('-- No diff yet')
-                    oldjpg = jpg
-            time.sleep(m_sec)
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print('!! error: %s' % str(e))
-            time.sleep(m_sec)
+        jpg = takeSnapShot(ip, m_save)
+        time.sleep(5.0)
