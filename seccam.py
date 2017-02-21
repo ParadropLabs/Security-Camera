@@ -1,19 +1,21 @@
 #!/usr/bin/python
 
-import sys, math, os, string, time, argparse, json, subprocess
-import httplib
+import argparse
 import base64
+import httplib
+import math
+import operator
+import os
+import re
 import StringIO
-import os.path
+import subprocess
+import sys
+import thread
+import time
 
-try:
-    import PIL
-    from PIL import Image, ImageChops
-except Exception as e:
-    print('No PIL, please install "python-imaging-library" if on OpenWrt')
-    sys.exit(1)
+from flask import Flask, jsonify, send_from_directory
+from PIL import Image, ImageChops
 
-timeflt = lambda: time.time()
 
 THRESH_0 = 20.0
 THRESH_1 = 40.0
@@ -22,6 +24,15 @@ THRESH_2 = 60.0
 WIFI_LEASE = "/paradrop/dnsmasq-wifi.leases"
 CAMERA_MAC = os.environ.get('CAMERA_MAC')
 CAMERA_HOSTNAME = os.environ.get('CAMERA_HOSTNAME')
+PARADROP_DATA_DIR = os.environ.get("PARADROP_DATA_DIR", "/tmp")
+PARADROP_SYSTEM_DIR = os.environ.get("PARADROP_SYSTEM_DIR", "/tmp")
+
+PHOTO_NAME_RE = re.compile(r"motion-(.*)\.jpg")
+SAVE_DIR = os.path.join(PARADROP_DATA_DIR, "motionLog")
+MAX_LATEST = 40
+
+server = Flask(__name__)
+
 
 def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
@@ -30,15 +41,16 @@ def setupArgParse():
     p.add_argument('-m_sensitivity', help='How sensitive the motion capture should be, 0=very, 1=somewhat, 2=not very', type=int, default=0)
     return p
 
+
 def getImage(ip):
     """Gets the file from the specified host, port and location/query"""
     try:
         # Here is a portion of the URL
         #######################################################################
         # TODO1 : Send a HTTP GET Request to the WebCam
-        # (with Username:'admin' and Password:''). 
-        # We recommend using the httplib package 
-        h = httplib.HTTP(ip, 80) 
+        # (with Username:'admin' and Password:'').
+        # We recommend using the httplib package
+        h = httplib.HTTP(ip, 80)
         h.putrequest('GET', '/image.jpg')
         h.putheader('Host', ip)
         h.putheader('User-agent', 'python-httplib')
@@ -47,9 +59,6 @@ def getImage(ip):
         h.endheaders()
 
         (returncode, returnmsg, headers) = h.getreply()
-        print "return code:",returncode
-        print "return message:",returnmsg
-        print "headers:",headers
         if returncode != 200:
             print returncode, returnmsg
             sys.exit()
@@ -60,6 +69,7 @@ def getImage(ip):
     except Exception as e:
         print('!! Failed to connect to webcam: %s' % str(e))
         return None
+
 
 def detectMotion(img1, jpg2):
     """
@@ -77,7 +87,7 @@ def detectMotion(img1, jpg2):
 
     #Convert to Image so we can compare them using PIL
     try:
-        jpg1 = PIL.Image.open(img1)
+        jpg1 = Image.open(img1)
     except Exception as e:
         print('jpg1: %s' % str(e))
         return None
@@ -86,12 +96,13 @@ def detectMotion(img1, jpg2):
         return (None, jpg1)
 
     # Now compute the difference
-    diff = PIL.ImageChops.difference(jpg1, jpg2)
+    diff = ImageChops.difference(jpg1, jpg2)
     h = diff.histogram()
     sq = (value*((idx%256)**2) for idx, value in enumerate(h))
     sum_sqs = sum(sq)
     rms = math.sqrt(sum_sqs / float(jpg1.size[0] * jpg1.size[1]))
     return (rms,jpg1)
+
 
 def getCameraIP():
     """
@@ -143,14 +154,59 @@ def getCameraIP():
     return ip
 
 
+@server.route('/motionLog/<path:path>')
+def GET_motionLog(path):
+    return send_from_directory(SAVE_DIR, path)
+
+
+@server.route('/photos')
+def GET_photos():
+    photos = []
+    for fname in os.listdir(SAVE_DIR):
+        match = PHOTO_NAME_RE.match(fname)
+        if match is None:
+            continue
+
+        ts = match.group(1)
+        try:
+            ts = float(ts)
+        except ValueError:
+            pass
+
+        photos.append({
+            'path': os.path.join('motionLog', fname),
+            'ts': ts
+        })
+
+    photos.sort(key=operator.itemgetter('ts'), reverse=True)
+    return jsonify(photos[:MAX_LATEST])
+
+
+@server.route('/')
+def GET_root():
+    return send_from_directory('web/app-dist', 'index.html')
+
+
+@server.route('/<path:path>')
+def GET_dist(path):
+    return send_from_directory('web/app-dist', path)
+
+
 if(__name__ == "__main__"):
+    # Make sure the photo directory exists.
+    if not os.path.isdir(SAVE_DIR):
+        os.makedirs(SAVE_DIR)
+
+    # Run the web server in a separate thread.
+    thread.start_new_thread(server.run, (), {'host': '0.0.0.0'})
+
     p = setupArgParse()
     args = p.parse_args()
 
     calib = args.calibrate
     m_sec = args.m_sec
     sens = args.m_sensitivity
-    m_save = '/var/www/html/motionLog/motion-'
+    m_save = os.path.join(SAVE_DIR, "motion-")
 
     if(m_sec < 1.0):
         print('** For the workshop, please do not use lower than 1.0 for m_sec')
