@@ -118,7 +118,7 @@ def getCameraIP():
 
                         # Example lease line:
                         #    1479277513 b0:c5:54:13:80:86 192.168.128.181 DCS-931L 01:b0:c5:54:13:80:86
-                        time,mac,ipaddr,hostname,altmac = line.split()
+                        ts,mac,ipaddr,hostname,altmac = line.split()
 
                         # Check environment variables
                         if ( CAMERA_MAC ):
@@ -252,7 +252,7 @@ if(__name__ == "__main__"):
                         #######################################################################
                         # TODO2 : Check the RMS difference and store the image to the proper
                         # location, for our webserver to read these files they should go
-                        # under the location /srv/www/motionlog/* 
+                        # under the location /srv/www/motionlog/*
                         if(diff > thresh):
                             print("** Motion! %.3f" % diff)
                             fileName = "%s%d.jpg" % (m_save, time.time())
