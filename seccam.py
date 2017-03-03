@@ -17,13 +17,10 @@ from flask import Flask, jsonify, send_from_directory
 from PIL import Image, ImageChops
 
 
-THRESH_0 = 20.0
-THRESH_1 = 40.0
-THRESH_2 = 60.0
-
 WIFI_LEASE = "/paradrop/dnsmasq-wifi.leases"
 CAMERA_MAC = os.environ.get('CAMERA_MAC')
 CAMERA_HOSTNAME = os.environ.get('CAMERA_HOSTNAME')
+MOTION_THRESHOLD = os.environ.get('MOTION_THRESHOLD', 40.0)
 PARADROP_DATA_DIR = os.environ.get("PARADROP_DATA_DIR", "/tmp")
 PARADROP_SYSTEM_DIR = os.environ.get("PARADROP_SYSTEM_DIR", "/tmp")
 
@@ -38,7 +35,6 @@ def setupArgParse():
     p = argparse.ArgumentParser(description='SecCam security suite')
     p.add_argument('-calibrate', help='Temporary mode to help calibrate the thresholds', action='store_true')
     p.add_argument('-m_sec', help='How much time to wait between motion images', type=float, default=2.0)
-    p.add_argument('-m_sensitivity', help='How sensitive the motion capture should be, 0=very, 1=somewhat, 2=not very', type=int, default=0)
     return p
 
 
@@ -115,7 +111,6 @@ def getCameraIP():
     ip = ""
     while(ip == ""):
         try:
-
             # Check for the file existing
             if (os.path.isfile(WIFI_LEASE)):
                 with open(WIFI_LEASE) as f:
@@ -145,6 +140,10 @@ def getCameraIP():
                         elif '01:b0:c5' in mac:
                             print "01:b0:c5 exists "
                             ip = ipaddr
+
+            if ip == "":
+                # Avoid busy loop here.
+                time.sleep(m_sec)
 
         except KeyboardInterrupt:
             break
@@ -205,29 +204,19 @@ if(__name__ == "__main__"):
 
     calib = args.calibrate
     m_sec = args.m_sec
-    sens = args.m_sensitivity
     m_save = os.path.join(SAVE_DIR, "motion-")
 
     if(m_sec < 1.0):
         print('** For the workshop, please do not use lower than 1.0 for m_sec')
         exit()
 
-    #Setup threshold for motion
-    #very sensitive
-    if(sens == 0):
-        thresh = THRESH_0
-    #kind of sensitive
-    elif(sens == 1):
-        thresh = THRESH_1
-    #not very sensitive
-    elif(sens == 2):
-        thresh = THRESH_2
-    else:
-        raise Exception('InvalidParam', 'm_sensitivity')
+    try:
+        thresh = float(MOTION_THRESHOLD)
+    except ValueError:
+        raise Exception("MOTION_THRESHOLD is not numeric")
 
     # Need to store the old image
     oldjpg = None
-
 
     ip = getCameraIP()
     print("Found IP %s" % ip)
