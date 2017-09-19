@@ -1,7 +1,28 @@
-version: 1
+as_root: true
+command: python -u seccam.py
+name: seccam
+config:
+  host_config:
+    port_bindings:
+      '81': 81
+  net:
+    wifi:
+      dhcp:
+        lease: 12h
+        limit: 250
+        start: 4
+      intfName: wlan0
+      key: paradropseccam
+      options:
+        hidden: false
+        isolate: false
+      ssid: seccam53
+      type: wifi
+  web:
+    port: 5000
+description: Security Camera
+packages:
+- iptables
 type: light
 use: python2
-command: python -u seccam.py
-packages:
-  - iptables
-as_root: true
+version: 1

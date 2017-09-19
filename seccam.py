@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 
 import argparse
 import base64
@@ -15,11 +16,9 @@ import time
 
 from flask import Flask, jsonify, send_from_directory
 from PIL import Image, ImageChops
+from pdtools import ParadropClient
 
 
-WIFI_LEASE = "/paradrop/dnsmasq-wifi.leases"
-CAMERA_MAC = os.environ.get('CAMERA_MAC')
-CAMERA_HOSTNAME = os.environ.get('CAMERA_HOSTNAME')
 MOTION_THRESHOLD = os.environ.get('MOTION_THRESHOLD', 40.0)
 PARADROP_DATA_DIR = os.environ.get("PARADROP_DATA_DIR", "/tmp")
 PARADROP_SYSTEM_DIR = os.environ.get("PARADROP_SYSTEM_DIR", "/tmp")
@@ -56,7 +55,7 @@ def getImage(ip):
 
         (returncode, returnmsg, headers) = h.getreply()
         if returncode != 200:
-            print returncode, returnmsg
+            print("GET {}/image.jpg: {}, {}".format(ip, returncode, returnmsg))
             sys.exit()
 
         f = h.getfile()
@@ -67,90 +66,26 @@ def getImage(ip):
         return None
 
 
-def detectMotion(img1, jpg2):
+def detectMotion(img1, img2):
     """
             Detects motion using a simple difference algorithm.
             Arguments:
-                    img1 : the image data from the getImage() function
-                    jpg2 : the last jpg object (you save outside of this function)
+                    img1 : the image from the getImage() function
+                    img2 : the previous image
             Returns:
-                    None if no img data provided
-                    (None, JPG) if jpg2 is None, we convert img1 into a JPG object and return that
-                    (RMS, JPG) if img difference successful
+                    RMS if img difference success
+                    None otherwise
     """
     if(not img1):
         return None
 
-    #Convert to Image so we can compare them using PIL
-    try:
-        jpg1 = Image.open(img1)
-    except Exception as e:
-        print('jpg1: %s' % str(e))
-        return None
-
-    if(not jpg2):
-        return (None, jpg1)
-
     # Now compute the difference
-    diff = ImageChops.difference(jpg1, jpg2)
+    diff = ImageChops.difference(img1, img2)
     h = diff.histogram()
     sq = (value*((idx%256)**2) for idx, value in enumerate(h))
     sum_sqs = sum(sq)
-    rms = math.sqrt(sum_sqs / float(jpg1.size[0] * jpg1.size[1]))
-    return (rms,jpg1)
-
-
-def getCameraIP():
-    """
-            Checks the paradrop wifi lease file for the camera's IP address
-            Arguments:
-                    None.
-            Returns:
-                    IP address of the camera
-    """
-    ip = ""
-    while(ip == ""):
-        try:
-            # Check for the file existing
-            if (os.path.isfile(WIFI_LEASE)):
-                with open(WIFI_LEASE) as f:
-                    for line in f:
-
-                        # Example lease line:
-                        #    1479277513 b0:c5:54:13:80:86 192.168.128.181 DCS-931L 01:b0:c5:54:13:80:86
-                        ts,mac,ipaddr,hostname,altmac = line.split()
-
-                        # Check environment variables
-                        if ( CAMERA_MAC ):
-                            print "Camera_mac exists: " + CAMERA_MAC
-                            if( mac == CAMERA_MAC ):
-                                ip = ipaddr
-                        elif ( CAMERA_HOSTNAME ):
-                            print "Camera_hostname exists: " + CAMERA_HOSTNAME
-                            if( hostname == CAMERA_HOSTNAME ):
-                                ip = ipaddr
-
-                        # Check the known D-Link camera macs we have for the workshop
-                        elif '28:10:7b' in mac:
-                            print "28:10:7b exists "
-                            ip = ipaddr
-                        elif 'b0:c5:54' in mac:
-                            print "b0:c5:54 exists "
-                            ip = ipaddr
-                        elif '01:b0:c5' in mac:
-                            print "01:b0:c5 exists "
-                            ip = ipaddr
-
-            if ip == "":
-                # Avoid busy loop here.
-                time.sleep(m_sec)
-
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print('!! error: %s' % str(e))
-            time.sleep(m_sec)
-    return ip
+    rms = math.sqrt(sum_sqs / float(img1.size[0] * img1.size[1]))
+    return rms
 
 
 @server.route('/motionLog/<path:path>')
@@ -215,54 +150,63 @@ if(__name__ == "__main__"):
     except ValueError:
         raise Exception("MOTION_THRESHOLD is not numeric")
 
-    # Need to store the old image
-    oldjpg = None
+    client = ParadropClient()
 
-    ip = getCameraIP()
-    print("Found IP %s" % ip)
+    # Wait until we detect at least one camera.
+    cameras = []
+    while len(cameras) < 1:
+        time.sleep(m_sec)
+        cameras = client.get_cameras()
 
-    # Set iptables for wan port access
-    cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + ip + ":80"
-    print "cmd: " + cmd
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    output, errors = p.communicate()
-    cmd="iptables -t nat -A POSTROUTING -p tcp -d " + ip + " --dport 81 -j MASQUERADE"
-    print "cmd: " + cmd
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    output, errors = p.communicate()
+    for camera in cameras:
+        # Set iptables for wan port access
+        cmd="iptables -t nat -A PREROUTING -p tcp --dport 81 -j DNAT --to-destination " + camera.host + ":80"
+        print("cmd: " + cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output, errors = p.communicate()
+        cmd="iptables -t nat -A POSTROUTING -p tcp -d " + camera.host + " --dport 81 -j MASQUERADE"
+        print("cmd: " + cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output, errors = p.communicate()
 
-    # Setup while loop requesting images from webcam
-    while(True):
-        try:
-            img = getImage(ip)
-            # Did we get an image?
-            if(img is None):
-                print("** No image discovered")
-                time.sleep(m_sec)
+    prev_images = dict()
+    while True:
+        # Getting the list of cameras every iteration in case a camera connects
+        # or disconnects.
+        for camera in client.get_cameras():
+            try:
+                img = camera.get_image()
+            except Exception as error:
+                print("Error getting image from {}: {}".format(camera, str(error)))
                 continue
+
+            if img is None:
+                print("** No image returned from {}".format(camera))
+                continue
+
+            # Load into Image object so we can compare images using PIL
+            try:
+                img = Image.open(img)
+            except Exception as error:
+                print("Image: {}".format(str(error)))
+                continue
+
+            if camera.host in prev_images:
+                diff = detectMotion(img, prev_images[camera.host])
+                if calib:
+                    print(diff)
+                elif diff:
+                    # if above a threshold, store it to file
+                    if diff > thresh:
+                        print("** Motion! {:.3f}".format(diff))
+                        fileName = "%s%d.jpg" % (m_save, time.time())
+                        img.save(fileName)
+                else:
+                    print('-- No diff yet')
+
             else:
-                tup = detectMotion(img, oldjpg)
-                if(tup):
-                    # Explode the result
-                    diff, jpg = tup
-                    if(calib):
-                        print(diff)
-                    elif(diff):
-                        # if above a threshold, store it to file
-                        #######################################################################
-                        # TODO2 : Check the RMS difference and store the image to the proper
-                        # location, for our webserver to read these files they should go
-                        # under the location /srv/www/motionlog/*
-                        if(diff > thresh):
-                            print("** Motion! %.3f" % diff)
-                            fileName = "%s%d.jpg" % (m_save, time.time())
-                            jpg.save(fileName)
-                    else:
-                        print('-- No diff yet')
-                    oldjpg = jpg
-            time.sleep(m_sec)
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print('!! error: %s' % str(e))
-            time.sleep(m_sec)
+                print("Processed first image from {}".format(camera))
+
+            prev_images[camera.host] = img
+
+        time.sleep(m_sec)
