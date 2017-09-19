@@ -1,6 +1,9 @@
-as_root: true
-command: python -u seccam.py
 name: seccam
+description: A Paradrop chute using a low resource device as a security camera.
+version: 1
+type: light
+use: python2
+command: python -u seccam.py
 config:
   host_config:
     port_bindings:
@@ -20,9 +23,9 @@ config:
       type: wifi
   web:
     port: 5000
-description: Security Camera
+source:
+  type: git
+  url: https://github.com/ParadropLabs/Security-Cam
 packages:
 - iptables
-type: light
-use: python2
-version: 1
+as_root: true
