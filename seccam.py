@@ -37,35 +37,6 @@ def setupArgParse():
     return p
 
 
-def getImage(ip):
-    """Gets the file from the specified host, port and location/query"""
-    try:
-        # Here is a portion of the URL
-        #######################################################################
-        # TODO1 : Send a HTTP GET Request to the WebCam
-        # (with Username:'admin' and Password:'').
-        # We recommend using the httplib package
-        h = httplib.HTTP(ip, 80)
-        h.putrequest('GET', '/image.jpg')
-        h.putheader('Host', ip)
-        h.putheader('User-agent', 'python-httplib')
-        h.putheader('Content-type', 'image/jpeg')
-        h.putheader('Authorization', 'Basic {0}'.format(base64.b64encode("{0}:".format('admin'))))
-        h.endheaders()
-
-        (returncode, returnmsg, headers) = h.getreply()
-        if returncode != 200:
-            print("GET {}/image.jpg: {}, {}".format(ip, returncode, returnmsg))
-            sys.exit()
-
-        f = h.getfile()
-        return StringIO.StringIO(f.read())
-
-    except Exception as e:
-        print('!! Failed to connect to webcam: %s' % str(e))
-        return None
-
-
 def detectMotion(img1, img2):
     """
             Detects motion using a simple difference algorithm.
