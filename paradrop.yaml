@@ -5,6 +5,10 @@ type: light
 use: python2
 command: python -u seccam.py
 config:
+  environment:
+    IMAGE_INTERVAL: 2.0
+    MOTION_THRESHOLD: 40.0
+    SECCAM_MODE: detect
   host_config:
     port_bindings:
       '81': 81

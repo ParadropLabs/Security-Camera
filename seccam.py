@@ -1,16 +1,11 @@
 #!/usr/bin/python
 from __future__ import print_function
 
-import argparse
-import base64
-import httplib
 import math
 import operator
 import os
 import re
-import StringIO
 import subprocess
-import sys
 import thread
 import time
 
@@ -19,7 +14,10 @@ from PIL import Image, ImageChops
 from pdtools import ParadropClient
 
 
+IMAGE_INTERVAL = os.environ.get('IMAGE_INTERVAL', 2.0)
 MOTION_THRESHOLD = os.environ.get('MOTION_THRESHOLD', 40.0)
+SECCAM_MODE = os.environ.get('SECCAM_MODE', 'detect')
+
 PARADROP_DATA_DIR = os.environ.get("PARADROP_DATA_DIR", "/tmp")
 PARADROP_SYSTEM_DIR = os.environ.get("PARADROP_SYSTEM_DIR", "/tmp")
 
@@ -28,13 +26,6 @@ SAVE_DIR = os.path.join(PARADROP_DATA_DIR, "motionLog")
 MAX_LATEST = 40
 
 server = Flask(__name__)
-
-
-def setupArgParse():
-    p = argparse.ArgumentParser(description='SecCam security suite')
-    p.add_argument('-calibrate', help='Temporary mode to help calibrate the thresholds', action='store_true')
-    p.add_argument('-m_sec', help='How much time to wait between motion images', type=float, default=2.0)
-    return p
 
 
 def detectMotion(img1, img2):
@@ -47,7 +38,7 @@ def detectMotion(img1, img2):
                     RMS if img difference success
                     None otherwise
     """
-    if(not img1):
+    if not img1:
         return None
 
     # Now compute the difference
@@ -97,7 +88,7 @@ def GET_dist(path):
     return send_from_directory('web/app-dist', path)
 
 
-if(__name__ == "__main__"):
+if __name__ == "__main__":
     # Make sure the photo directory exists.
     if not os.path.isdir(SAVE_DIR):
         os.makedirs(SAVE_DIR)
@@ -105,21 +96,22 @@ if(__name__ == "__main__"):
     # Run the web server in a separate thread.
     thread.start_new_thread(server.run, (), {'host': '0.0.0.0'})
 
-    p = setupArgParse()
-    args = p.parse_args()
-
-    calib = args.calibrate
-    m_sec = args.m_sec
     m_save = os.path.join(SAVE_DIR, "motion-")
 
-    if(m_sec < 1.0):
-        print('** For the workshop, please do not use lower than 1.0 for m_sec')
+    mode = SECCAM_MODE.lower()
+    if mode not in ["calibrate", "detect"]:
+        print("** SECCAM_MODE must be set to calibrate or detect")
         exit()
 
     try:
         thresh = float(MOTION_THRESHOLD)
     except ValueError:
         raise Exception("MOTION_THRESHOLD is not numeric")
+
+    try:
+        m_sec = float(IMAGE_INTERVAL)
+    except ValueError:
+        raise Exception("IMAGE_INTERVAL is not numeric")
 
     client = ParadropClient()
 
@@ -164,16 +156,14 @@ if(__name__ == "__main__"):
 
             if camera.host in prev_images:
                 diff = detectMotion(img, prev_images[camera.host])
-                if calib:
+                if mode == "calibrate":
                     print(diff)
-                elif diff:
+                elif mode == "detect":
                     # if above a threshold, store it to file
-                    if diff > thresh:
+                    if diff is not None and diff > thresh:
                         print("** Motion! {:.3f}".format(diff))
                         fileName = "%s%d.jpg" % (m_save, time.time())
                         img.save(fileName)
-                else:
-                    print('-- No diff yet')
 
             else:
                 print("Processed first image from {}".format(camera))
