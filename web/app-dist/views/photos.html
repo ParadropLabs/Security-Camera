@@ -1,0 +1,21 @@
+<div id="photos" class="container">
+  <h1>Photos</h1>
+  <div ng-repeat="photo in photos track by $index" ng-if="$index % 4 === 0" class="row">
+    <div class="col-xs-3 cam-thumbnail">
+      <h5>Taken at {{ photos[$index + 0].ts | date:'mediumTime':'CST' }}</h5>
+      <img class="img-responsive" ng-src="{{photos[$index + 0].path}}" alt="A SecCam photo">
+    </div>
+    <div class="col-xs-3 cam-thumbnail">
+      <h5>Taken at {{ photos[$index + 1].ts | date:'mediumTime':'CST' }}</h5>
+      <img class="img-responsive" ng-src="{{photos[$index + 1].path}}" alt="A SecCam photo">
+    </div>
+    <div class="col-xs-3 cam-thumbnail">
+      <h5>Taken at {{ photos[$index + 2].ts | date:'mediumTime':'CST' }}</h5>
+      <img class="img-responsive" ng-src="{{photos[$index + 2].path}}" alt="A SecCam photo">
+    </div>
+    <div class="col-xs-3 cam-thumbnail">
+      <h5>Taken at {{ photos[$index + 3].ts | date:'mediumTime':'CST' }}</h5>
+      <img class="img-responsive" ng-src="{{photos[$index + 3].path}}" alt="A SecCam photo">
+    </div>
+  </div>
+</div>
