@@ -23,6 +23,8 @@ config:
       options:
         hidden: false
         isolate: false
+      requests:
+        hwmode: 11g
       ssid: seccam53
       type: wifi
   web:
